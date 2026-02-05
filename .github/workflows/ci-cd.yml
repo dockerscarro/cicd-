@@ -1,13 +1,14 @@
-name: CI/CD Pipeline (QA → Main)
+name: CI/CD Pipeline
 
 on:
   push:
     branches:
-      - qa   # Only QA triggers the workflow
+      - qa
 
 jobs:
   ci:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,6 +28,7 @@ jobs:
   docker:
     needs: ci
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -39,19 +41,20 @@ jobs:
 
   create-pr:
     needs: [ci, docker]
-    if: success()  # Only run if QA CI/CD succeeds
+    if: ${{ success() }}      # Only run if previous jobs succeed
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create Pull Request to main using PAT
+      - name: Create Pull Request to main
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.PAT_TOKEN }}   # <-- Your Personal Access Token
+          token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "CI/CD success: automatic PR from qa → main"
           branch: qa
           base: main
           title: "Automatic PR: qa → main"
           body: |
             This PR was automatically created because the CI/CD pipeline on the `qa` branch succeeded.
+
