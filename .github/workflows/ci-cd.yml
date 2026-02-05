@@ -3,10 +3,17 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
+      # - main
       - qa
+  # pull_request:
+  #   branches:
+  #     - main
+  #   types:
+  #     - closed
 
 jobs:
   ci:
+    if: github.event.pull_request.merged == true || github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:
@@ -38,5 +45,3 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t dgm-remapp:latest .
-
-  
