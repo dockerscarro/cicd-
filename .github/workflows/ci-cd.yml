@@ -1,19 +1,12 @@
-name: CI/CD Pipeline
+name: CI/CD QA Pipeline
 
 on:
   push:
     branches:
-      # - main
       - qa
-  # pull_request:
-  #   branches:
-  #     - main
-  #   types:
-  #     - closed
 
 jobs:
   ci:
-    if: github.event.pull_request.merged == true || github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:
@@ -45,3 +38,17 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t dgm-remapp:latest .
+
+  create-pr:
+    needs: docker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Pull Request to main
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          commit-message: "Update from QA branch"
+          branch: qa
+          base: main
+          title: "QA changes ready for main"
+          body: "This PR is automatically created after QA CI/CD succeeds."
