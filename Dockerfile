@@ -29,3 +29,6 @@ COPY --from=builder /app/public ./public
 EXPOSE 3000
 
 CMD ["node", "dist/app.js"]
+
+# test
+# test
