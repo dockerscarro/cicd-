@@ -3,13 +3,13 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main
+      # - main
       - qa
-  pull_request:
-    branches:
-      - main
-    types:
-      - closed
+  # pull_request:
+  #   branches:
+  #     - main
+  #   types:
+  #     - closed
 
 jobs:
   ci:
