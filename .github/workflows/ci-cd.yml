@@ -3,12 +3,9 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - qa   # Only runs when code is pushed to 'qa'
+      - qa
 
 jobs:
-  # ===============================
-  # 1️⃣ CI: Build Node app
-  # ===============================
   ci:
     runs-on: ubuntu-latest
 
@@ -28,9 +25,6 @@ jobs:
       - name: Build TypeScript
         run: npm run build
 
-  # ===============================
-  # 2️⃣ Docker: Build image
-  # ===============================
   docker:
     needs: ci
     runs-on: ubuntu-latest
@@ -45,14 +39,10 @@ jobs:
       - name: Build Docker image
         run: docker build -t dgm-remapp:latest .
 
-  # ===============================
-  # 3️⃣ Create PR to main
-  # ===============================
   create-pr:
     needs: [ci, docker]
-    if: ${{ success() }}   # Run only if previous jobs succeed
+    if: ${{ success() }}      # Only run if previous jobs succeed
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -60,7 +50,7 @@ jobs:
       - name: Create Pull Request to main
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.PAT_TOKEN }}  # PAT token with repo access
+          token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "CI/CD success: automatic PR from qa → main"
           branch: qa
           base: main
