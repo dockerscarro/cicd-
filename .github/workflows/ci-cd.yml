@@ -1,4 +1,4 @@
-name: CI/CD QA Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
@@ -40,15 +40,20 @@ jobs:
         run: docker build -t dgm-remapp:latest .
 
   create-pr:
-    needs: docker
+    needs: [ci, docker]
+    if: ${{ success() }}      # Only run if previous jobs succeed
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Create Pull Request to main
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.PAT_TOKEN }}
-          commit-message: "Update from QA branch"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "CI/CD success: automatic PR from qa → main"
           branch: qa
           base: main
-          title: "QA changes ready for main"
-          body: "This PR is automatically created after QA CI/CD succeeds."
+          title: "Automatic PR: qa → main"
+          body: |
+            This PR was automatically created because the CI/CD pipeline on the `qa` branch succeeded.
