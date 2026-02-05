@@ -6,6 +6,8 @@ const hubspotClient = new Client({
   accessToken: process.env.HUBSPOT_API_KEY!,
 });
 
+
+
 /**
  * ===============================
  * Signup data (Step 1)
