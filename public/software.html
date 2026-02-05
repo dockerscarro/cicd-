@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Software & Server Setup</title>
+
+<style>
+*{box-sizing:border-box;}
+
+body{
+  font-family:"Segoe UI",Arial,sans-serif;
+  height:100vh;
+  margin:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:linear-gradient(135deg,#667eea,#764ba2);
+}
+
+.card{
+  background:#fff;
+  padding:30px;
+  width:380px;
+  border-radius:14px;
+  box-shadow:0 20px 40px rgba(0,0,0,0.2);
+  display:flex;
+  flex-direction:column;
+}
+
+h2{text-align:center;margin-bottom:15px;}
+
+select,input{
+  margin:10px 0;
+  padding:12px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  font-size:15px;
+}
+
+.result{
+  background:#f4f6ff;
+  padding:12px;
+  border-radius:8px;
+  margin-top:10px;
+  font-size:14px;
+}
+
+button{
+  margin-top:18px;
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  font-weight:600;
+  color:#fff;
+  cursor:pointer;
+  background:linear-gradient(135deg,#43cea2,#185a9d);
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+<h2>Software & Server Setup</h2>
+
+<!-- SOFTWARE -->
+<select id="vendor">
+<option value="">-- Select software --</option>
+<option value="E-Soft">E-Soft</option>
+<option value="BTMS">BTMS</option>
+<option value="Pastel">Pastel</option>
+</select>
+
+<!-- USERS -->
+<input type="number" id="users" placeholder="Number of Users" />
+
+<!-- RECOMMENDED -->
+<div class="result" id="recommendBox" style="display:none;">
+<div><b>Recommended CPU:</b> <span id="cpu"></span></div>
+<div><b>Recommended RAM:</b> <span id="ram"></span></div>
+<div><b>Recommended Storage:</b> <span id="storage"></span></div>
+</div>
+
+<!-- FINAL EDITABLE -->
+<input id="final_ram" placeholder="Final RAM (editable)" />
+<input id="final_storage" placeholder="Final Storage (editable)" />
+
+<button id="submitBtn">Submit</button>
+</div>
+
+<script>
+const usersInput=document.getElementById("users");
+
+let recommended_cpu="";
+let recommended_ram="";
+let recommended_storage="";
+
+/* 🔥 AUTO RECOMMEND BASED ON USERS */
+usersInput.oninput=()=>{
+
+  const users=Number(usersInput.value);
+  if(!users) return;
+
+  if(users<=10){
+    recommended_cpu="2 Core";
+    recommended_ram="8 GB";
+    recommended_storage="100 GB SSD";
+  }
+  else if(users<=50){
+    recommended_cpu="4 Core";
+    recommended_ram="16 GB";
+    recommended_storage="200 GB SSD";
+  }
+  else{
+    recommended_cpu="8 Core";
+    recommended_ram="32 GB";
+    recommended_storage="500 GB SSD";
+  }
+
+  document.getElementById("cpu").innerText=recommended_cpu;
+  document.getElementById("ram").innerText=recommended_ram;
+  document.getElementById("storage").innerText=recommended_storage;
+
+  // auto-fill editable fields
+  document.getElementById("final_ram").value=recommended_ram;
+  document.getElementById("final_storage").value=recommended_storage;
+
+  document.getElementById("recommendBox").style.display="block";
+};
+
+/* 🚀 SUBMIT */
+document.getElementById("submitBtn").onclick=async()=>{
+
+  const vendor=document.getElementById("vendor").value;
+  const users=usersInput.value;
+  const final_ram=document.getElementById("final_ram").value;
+  const final_storage=document.getElementById("final_storage").value;
+  const email=localStorage.getItem("leadEmail");
+
+  if(!vendor) return alert("Select software");
+  if(!users) return alert("Enter number of users");
+  if(!email) return alert("Signup first");
+
+  const res=await fetch("/api/save-specs",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({
+      email,
+      vendor,
+      number_of_users:users,
+      recommended_cpu,
+      recommended_ram,
+      recommended_storage,
+      final_ram,
+      final_storage
+    })
+  });
+
+  if(res.ok){
+    alert("Saved successfully 🎉");
+    localStorage.removeItem("leadEmail");
+    location.href="/thankyou.html";
+  }else{
+    alert("Something went wrong");
+  }
+};
+</script>
+
+</body>
+</html>
