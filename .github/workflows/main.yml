@@ -1,15 +1,14 @@
-name: CI/CD Pipeline
+name: CI/CD Main Pipeline
 
 on:
   push:
     branches:
       - main
-      
-  # pull_request:
-  #   branches:
-  #     - main
-  #   types:
-  #     - closed
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
 
 jobs:
   ci:
