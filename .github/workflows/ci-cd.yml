@@ -1,14 +1,11 @@
-name: Feature Branch CI/CD → QA
+name: CI/CD Pipeline
 
 on:
   push:
-    # Trigger on all branches except main and qa
-    branches-ignore:
-      - main
+    branches:
       - qa
 
 jobs:
-  # -------------------- 1️⃣ CI: Build & Test --------------------
   ci:
     runs-on: ubuntu-latest
 
@@ -28,11 +25,6 @@ jobs:
       - name: Build TypeScript
         run: npm run build
 
-      # Optional: add tests here
-      # - name: Run tests
-      #   run: npm test
-
-  # -------------------- 2️⃣ Docker: Build image --------------------
   docker:
     needs: ci
     runs-on: ubuntu-latest
@@ -47,23 +39,21 @@ jobs:
       - name: Build Docker image
         run: docker build -t dgm-remapp:latest .
 
-  # -------------------- 3️⃣ Create PR → QA --------------------
-  create-pr-to-qa:
+  create-pr:
     needs: [ci, docker]
-    if: ${{ success() }}        # Only run if CI + Docker succeed
+    if: ${{ success() }}      # Only run if previous jobs succeed
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create Pull Request to QA
+      - name: Create Pull Request to main
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "CI/CD success: automatic PR from ${{ github.ref_name }} → qa"
-          branch: ${{ github.ref_name }}     # Feature branch
-          base: qa                           # Target QA branch
-          title: "Automatic PR: ${{ github.ref_name }} → qa"
+          commit-message: "CI/CD success: automatic PR from qa → main"
+          branch: qa
+          base: main
+          title: "Automatic PR: qa → main"
           body: |
-            This PR was automatically created because the CI/CD pipeline on branch `${{ github.ref_name }}` succeeded.
+            This PR was automatically created because the CI/CD pipeline on the `qa` branch succeeded.
