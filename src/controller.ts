@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { HubspotService } from "./hubspotService.js";
 
+
 /**
  * ===============================
  * Signup
