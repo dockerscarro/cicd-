@@ -3,17 +3,10 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      # - main
       - qa
-  # pull_request:
-  #   branches:
-  #     - main
-  #   types:
-  #     - closed
 
 jobs:
   ci:
-    if: github.event.pull_request.merged == true || github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:
@@ -45,3 +38,22 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t dgm-remapp:latest .
+
+  create-pr:
+    needs: [ci, docker]
+    if: ${{ success() }}      # Only run if previous jobs succeed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Pull Request to main
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "CI/CD success: automatic PR from qa → main"
+          branch: qa
+          base: main
+          title: "Automatic PR: qa → main"
+          body: |
+            This PR was automatically created because the CI/CD pipeline on the `qa` branch succeeded.
