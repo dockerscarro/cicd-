@@ -20,9 +20,8 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      # Matches your tsconfig (noEmit: true)
       - name: Type check TypeScript
         run: npx tsc --noEmit
 
