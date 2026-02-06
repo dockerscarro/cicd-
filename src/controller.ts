@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { HubspotService } from "./hubspotService.ts";
 
 
+
 /**
  * SIGNUP
  * Creates a new lead ONLY if email does not exist
