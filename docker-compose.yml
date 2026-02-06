@@ -2,12 +2,14 @@ version: "3.9"
 
 services:
   app:
-    image: dgm-remapp:latest
     container_name: dgm-remapp
     build: .
+    image: dgm-remapp:latest
     ports:
       - "3000:3000"
     env_file:
       - .env
+    volumes:
+      - .:/app
+      - /app/node_modules
     restart: unless-stopped
-    
