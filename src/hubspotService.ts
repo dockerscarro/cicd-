@@ -8,6 +8,7 @@ const hubspotClient = new Client({
 });
 
 
+
 export interface SignupData {
   email: string;
   firstName: string;
