@@ -17,6 +17,7 @@ export interface SignupData {
 }
 
 export class HubspotService {
+  
 
   private static cleanProperties(
     data: Record<string, any>
