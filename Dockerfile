@@ -1,36 +1,18 @@
-# ---------- BUILD STAGE ----------
-FROM node:20-alpine AS builder
-
-WORKDIR /app
-
-
-
-COPY package*.json ./
-RUN npm ci
-
-COPY tsconfig.json ./
-COPY src ./src
-COPY public ./public
-
-RUN npm run build
-
-
-# ---------- RUNTIME STAGE ----------
 FROM node:20-alpine
 
 WORKDIR /app
 
-ENV NODE_ENV=production
-
+# Install dependencies
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci
 
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/public ./public
+# Copy source
+COPY tsconfig.json ./
+COPY src ./src
+COPY public ./public
+
+ENV NODE_ENV=development
 
 EXPOSE 3000
 
-CMD ["node", "dist/app.js"]
-
-# test
-# test
+CMD ["npm", "run", "dev"]

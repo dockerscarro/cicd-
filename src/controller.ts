@@ -1,70 +1,38 @@
 import type { Request, Response } from "express";
-import { HubspotService } from "./hubspotService.js";
+import { HubspotService } from "./hubspotService.ts";
 
 
+/**
+ * SIGNUP
+ * Creates a new lead ONLY if email does not exist
+ */
 export const signup = async (req: Request, res: Response) => {
   try {
-    const result = await HubspotService.upsertLead(req.body);
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const exists = await HubspotService.emailExists(email);
+
+    if (exists) {
+      return res.status(409).json({
+        success: false,
+        message: "Email already exists",
+      });
+    }
+
+    const hubspotResult = await HubspotService.createLead(req.body);
 
     
     res.json({
       success: true,
-      message: "Contact created or updated",
-      result,
-    });
-  } catch (err: any) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
-
-/**
- * ===============================
- * Save software + server specs (FINAL STEP)
- * ===============================
- */
-export const saveSpecs = async (req: Request, res: Response) => {
-  const {
-    email,
-    vendor,
-    number_of_users,
-    recommended_cpu,
-    recommended_ram,
-    recommended_storage,
-    final_ram,
-    final_storage,
-  } = req.body;
-
-  if (!email || !vendor) {
-    return res.status(400).json({
-      success: false,
-      message: "Email and vendor are required",
-    });
-  }
-
-  try {
-    const contact = await HubspotService.getContactByEmail(email);
-
-    if (!contact) {
-      return res.status(404).json({
-        success: false,
-        message: "Contact not found",
-      });
-    }
-
-    const result = await HubspotService.updateLead(contact.id, {
-      vendor,
-      number_of_users,
-      recommended_cpu,
-      recommended_ram,
-      recommended_storage,
-      final_ram,
-      final_storage,
-    });
-
-    res.json({
-      success: true,
-      message: "Software & server specs saved 🚀",
-      result,
+      message: "Contact created successfully",
+      hubspotResult,
     });
   } catch (err: any) {
     console.error(err);
@@ -75,46 +43,74 @@ export const saveSpecs = async (req: Request, res: Response) => {
   }
 };
 
-
 /**
- * Save software updates for a lead
+ * CHECK EMAIL
+ * Used by Software & Server Setup page
  */
-export const saveSoftware = async (req: Request, res: Response) => {
-  const { email, vendor } = req.body;
-
-  if (!email || !vendor) {
-    return res.status(400).json({
-      success: false,
-      message: "Email and vendor are required"
-    });
-  }
-
+export const checkEmail = async (req: Request, res: Response) => {
   try {
-    // 1️⃣ Find the contact by email
-    const contact = await HubspotService.getContactByEmail(email);
+    const { email } = req.body;
 
-    if (!contact) {
-      return res.status(404).json({
+    if (!email) {
+      return res.status(400).json({
         success: false,
-        message: "Contact not found"
+        message: "Email is required",
       });
     }
 
-    // 2️⃣ Update vendor property
-    const result = await HubspotService.updateLead(contact.id, { vendor });
+    const exists = await HubspotService.emailExists(email);
 
     res.json({
       success: true,
-      message: "Software saved successfully 🎉",
-      result
+      exists,
     });
   } catch (err: any) {
-    res.status(err.code || 500).json({
+    console.error(err);
+    res.status(500).json({
       success: false,
-      message: err.body?.message || err.message
+      message: err.message,
     });
   }
 };
 
+/**
+ * SAVE SOFTWARE / SERVER SPECS
+ */
+export const saveSpecs = async (req: Request, res: Response) => {
+  const { email, vendor, number_of_users } = req.body;
 
+  if (!email || !vendor || !number_of_users) {
+    return res.status(400).json({
+      success: false,
+      message: "Email, vendor and number_of_users are required",
+    });
+  }
 
+  try {
+    const contact = await HubspotService.getContactByEmail(email);
+
+    if (!contact || !contact.id) {
+      return res.status(404).json({
+        success: false,
+        message: "Contact not found",
+      });
+    }
+
+    const hubspotResult = await HubspotService.updateLead(
+      contact.id,
+      { vendor, number_of_users }
+    );
+
+    res.json({
+      success: true,
+      message: "Software & server specs saved successfully 🚀",
+      hubspotResult,
+    });
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
