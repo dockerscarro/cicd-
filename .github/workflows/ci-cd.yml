@@ -20,10 +20,9 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      # Optional but recommended: TypeScript type-check
-      - name: Type check
+      - name: TypeScript type check
         run: npx tsc --noEmit
 
   docker:
