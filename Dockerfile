@@ -1,36 +1,20 @@
-# ---------- BUILD STAGE ----------
-FROM node:20-alpine AS builder
-
-WORKDIR /app
-
-
-
-COPY package*.json ./
-RUN npm ci
-
-COPY tsconfig.json ./
-COPY src ./src
-COPY public ./public
-
-RUN npm run build
-
-
-# ---------- RUNTIME STAGE ----------
 FROM node:20-alpine
 
 WORKDIR /app
 
-ENV NODE_ENV=production
-
+# Install dependencies first (better caching)
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install
 
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/public ./public
+# Copy source code
+COPY tsconfig.json ./
+COPY src ./src
+COPY public ./public
+COPY .env .env
+
+ENV NODE_ENV=development
 
 EXPOSE 3000
 
-CMD ["node", "dist/app.js"]
-
-# test
-# test
+# Run exactly what works locally
+CMD ["npm", "run", "dev"]
