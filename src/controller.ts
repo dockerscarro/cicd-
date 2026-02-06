@@ -2,12 +2,6 @@ import type { Request, Response } from "express";
 import { HubspotService } from "./hubspotService.js";
 
 
-
-/**
- * ===============================
- * Signup
- * ===============================
- */
 export const signup = async (req: Request, res: Response) => {
   try {
     const result = await HubspotService.upsertLead(req.body);
