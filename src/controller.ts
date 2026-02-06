@@ -12,6 +12,7 @@ export const signup = async (req: Request, res: Response) => {
   try {
     const result = await HubspotService.upsertLead(req.body);
 
+    
     res.json({
       success: true,
       message: "Contact created or updated",
