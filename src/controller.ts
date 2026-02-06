@@ -28,6 +28,7 @@ export const signup = async (req: Request, res: Response) => {
 
     const hubspotResult = await HubspotService.createLead(req.body);
 
+    
     res.json({
       success: true,
       message: "Contact created successfully",
@@ -113,3 +114,6 @@ export const saveSpecs = async (req: Request, res: Response) => {
     });
   }
 };
+
+
+
