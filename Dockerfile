@@ -2,19 +2,17 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install dependencies first (better caching)
+# Install dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
-# Copy source code
+# Copy source
 COPY tsconfig.json ./
 COPY src ./src
 COPY public ./public
-COPY .env .env
 
 ENV NODE_ENV=development
 
 EXPOSE 3000
 
-# Run exactly what works locally
 CMD ["npm", "run", "dev"]
