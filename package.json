@@ -1,8 +1,9 @@
 {
   "name": "dgm-remapp",
   "version": "1.0.0",
-  "type": "module",
   "scripts": {
+    "build": "tsc",
+    "start": "node dist/app.js",
     "dev": "ts-node src/app.ts"
   },
   "dependencies": {
