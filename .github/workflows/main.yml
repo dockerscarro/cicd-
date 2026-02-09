@@ -38,3 +38,34 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t dgm-remapp:latest .
+
+      - name: Run container
+        run: |
+          docker run -d \
+            --name dgm-remapp-main-test \
+            -p 3000:3000 \
+            dgm-remapp:latest
+
+      - name: Wait and verify container is running
+        run: |
+          sleep 10
+          if [ "$(docker inspect -f '{{.State.Running}}' dgm-remapp-main-test)" != "true" ]; then
+            echo "❌ Container crashed or exited"
+            docker logs dgm-remapp-main-test
+            exit 1
+          fi
+          echo "✅ Container is running"
+
+      - name: HTTP smoke test
+        run: |
+          curl -f http://localhost:3000
+
+      - name: Print container logs (debug)
+        if: always()
+        run: docker logs dgm-remapp-main-test
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker stop dgm-remapp-main-test
+          docker rm dgm-remapp-main-test
