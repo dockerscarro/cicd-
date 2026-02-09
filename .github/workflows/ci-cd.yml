@@ -70,3 +70,18 @@ jobs:
           docker stop dgm-remapp-test
           docker rm dgm-remapp-test
 
+  server-connect:
+      needs: docker
+      runs-on: ubuntu-latest
+  
+      steps:
+        - name: Setup SSH
+          uses: webfactory/ssh-agent@v0.8.1
+          with:
+            ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
+  
+        - name: Test SSH connection to server
+          run: |
+            ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo '✅ Connected to server successfully!'"
+
+
