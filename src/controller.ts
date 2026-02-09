@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { HubspotService } from "./hubspotService.ts";
+import { HubspotService } from "./hubspotService";
 
 
 
