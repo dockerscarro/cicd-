@@ -114,7 +114,7 @@ jobs:
           fi
       
           # Run container
-          docker run -d -p 3000:3000 --name $CONTAINER_NAME $CONTAINER_NAME:qa
+          docker run -d -p 3002:3000 --name $CONTAINER_NAME $CONTAINER_NAME:qa
       
           # Verify container is running
           sleep 5
