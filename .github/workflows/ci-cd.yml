@@ -25,63 +25,60 @@ jobs:
       - name: TypeScript type check
         run: npx tsc --noEmit
 
-  docker:
+  deploy-to-server:
     needs: ci
     runs-on: ubuntu-latest
-  
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-  
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-  
-      - name: Build Docker image
-        run: docker build -t dgm-remapp:latest .
-  
-      - name: Run container
-        run: |
-          docker run -d \
-            --name dgm-remapp-test \
-            -p 3000:3000 \
-            dgm-remapp:latest
-  
-      - name: Wait and verify container is running
-        run: |
-          sleep 10
-          if [ "$(docker inspect -f '{{.State.Running}}' dgm-remapp-test)" != "true" ]; then
-            echo "❌ Container crashed or exited"
-            docker logs dgm-remapp-test
-            exit 1
-          fi
-          echo "✅ Container is running"
-  
-      - name: HTTP smoke test
-        run: |
-          curl -f http://localhost:3000
-  
-      - name: Print container logs (debug)
-        if: always()
-        run: docker logs dgm-remapp-test
-  
-      - name: Cleanup
-        if: always()
-        run: |
-          docker stop dgm-remapp-test
-          docker rm dgm-remapp-test
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
 
-  server-connect:
-      needs: docker
-      runs-on: ubuntu-latest
-  
-      steps:
-        - name: Setup SSH
-          uses: webfactory/ssh-agent@v0.8.0
-          with:
-            ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
-  
-        - name: Test SSH connection to server
-          run: |
-            ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo '✅ Connected to server successfully!'"
+      - name: Test SSH connection
+        run: |
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT }} \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "echo '✅ Connected to server successfully!'"
 
+      - name: Deploy/update container on server
+        run: |
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT }} \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+              set -e
 
+              APP_DIR=~/dgm-remapp
+              CONTAINER_NAME=dgm-remapp
+
+              # Clone repo first time, otherwise pull latest changes
+              if [ ! -d "$APP_DIR" ]; then
+                  git clone -b qa git@github.com:dockerscarro/cicd-.git $APP_DIR
+              else
+                  cd $APP_DIR
+                  git fetch --all
+                  git reset --hard origin/qa
+              fi
+
+              cd $APP_DIR
+
+              # Build Docker image
+              docker build -t dgm-remapp:qa .
+
+              # Stop and remove existing container if it exists
+              if [ "$(docker ps -aq -f name=$CONTAINER_NAME)" ]; then
+                  echo "🔹 Restarting existing container with new image"
+                  docker stop $CONTAINER_NAME
+                  docker rm $CONTAINER_NAME
+              else
+                  echo "🔹 First deployment: running new container"
+              fi
+
+              # Run container with port mapping
+              docker run -d \
+                -p 3000:3000 \
+                --name $CONTAINER_NAME \
+                -v $APP_DIR:/app \
+                dgm-remapp:qa
+
+              echo "✅ Container is running on port 3000"
+EOF
