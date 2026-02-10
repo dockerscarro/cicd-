@@ -39,7 +39,7 @@ jobs:
 
       - name: Run container for smoke test
         run: |
-          docker run -d --name dgm-remapp-test -p 3000:3000 dgm-remapp:test
+          docker run -d --name dgm-remapp-test -p 3002:3000 dgm-remapp:test
           sleep 10
           if [ "$(docker inspect -f '{{.State.Running}}' dgm-remapp-test)" != "true" ]; then
             echo "❌ Container crashed or exited"
@@ -49,7 +49,7 @@ jobs:
           echo "✅ Container is running"
 
       - name: HTTP smoke test
-        run: curl -f http://localhost:3000
+        run: curl -f http://localhost:3002
 
       - name: Print container logs (debug)
         if: always()
