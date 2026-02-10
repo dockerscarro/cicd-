@@ -7,8 +7,6 @@ const hubspotClient = new Client({
   accessToken: process.env.HUBSPOT_API_KEY!,
 });
 
-
-
 export interface SignupData {
   email: string;
   firstName: string;
