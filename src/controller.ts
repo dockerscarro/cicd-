@@ -1,12 +1,6 @@
 import type { Request, Response } from "express";
 import { HubspotService } from "./hubspotService";
 
-
-
-/**
- * SIGNUP
- * Creates a new lead ONLY if email does not exist
- */
 export const signup = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
