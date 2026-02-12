@@ -41,7 +41,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image (Node)
-        run: docker build --target node-runtime -t dgm-remapp:test .
+        run: docker build -t dgm-remapp:test .
 
       - name: Run container for smoke test
         run: |
@@ -103,7 +103,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build ETL Docker image
-        run: docker build --target hubspot-etl -t hubspot-sync:test .
+        run: docker build -t hubspot-sync:test .
 
 
   #########################################################
