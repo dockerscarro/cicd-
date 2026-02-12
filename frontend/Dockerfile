@@ -1,28 +1,18 @@
-# ---------- Build Stage ----------
-FROM node:20-alpine AS builder
+FROM node:20-alpine
 
 WORKDIR /app
 
 COPY package*.json ./
 RUN npm ci
 
-COPY . .
+COPY tsconfig.json ./
+COPY src ./src
+COPY public ./public
 
 RUN npm run build
 
-
-# ---------- Production Stage ----------
-FROM node:20-alpine
-
-WORKDIR /app
 ENV NODE_ENV=production
-
-# Install static file server
-RUN npm install -g serve
-
-# Copy built files
-COPY --from=builder /app/dist ./dist
 
 EXPOSE 3000
 
-CMD ["serve", "-s", "dist", "-l", "3000"]
+CMD ["npm", "start"]
