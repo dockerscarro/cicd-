@@ -1,9 +1,15 @@
 version: "3.9"
 
 services:
+
+  ##################################################
+  # 1️⃣ NODE APPLICATION
+  ##################################################
   app:
     container_name: dgm-remapp
-    build: .
+    build:
+      context: .
+      target: node-runtime   # only if using multi-stage Dockerfile
     image: dgm-remapp:latest
     ports:
       - "3000:3000"
@@ -13,3 +19,34 @@ services:
       - .:/app
       - /app/node_modules
     restart: unless-stopped
+    networks:
+      - hubspot-net
+
+
+  ##################################################
+  # 2️⃣ HUBSPOT ETL SERVICE
+  ##################################################
+  hubspot_sync:
+    container_name: hubspot-sync
+    build:
+      context: .
+      target: hubspot-etl    # only if using multi-stage Dockerfile
+    image: hubspot-sync:latest
+    environment:
+      HUBSPOT_API_KEY: ${HUBSPOT_API_KEY}
+      POSTGRES_HOST: postgres-hubspot
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: hubspot_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - hubspot-net
+    restart: "no"
+
+
+##################################################
+# NETWORK
+##################################################
+networks:
+  hubspot-net:
+    external: true   # must already exist on server
