@@ -1,1 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Software & Server Setup</title>
+<style>
+*{box-sizing:border-box;}
+body{
+  font-family:"Segoe UI",Arial,sans-serif;
+  height:100vh;
+  margin:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:linear-gradient(135deg,#667eea,#764ba2);
+}
+.card{
+  background:#fff;
+  padding:30px;
+  width:380px;
+  border-radius:14px;
+  box-shadow:0 20px 40px rgba(0,0,0,0.2);
+  display:flex;
+  flex-direction:column;
+}
+h2{text-align:center;margin-bottom:15px;}
+select,input{
+  margin:10px 0;
+  padding:12px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  font-size:15px;
+}
+button{
+  margin-top:18px;
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  font-weight:600;
+  color:#fff;
+  cursor:pointer;
+  background:linear-gradient(135deg,#43cea2,#185a9d);
+}
+</style>
+</head>
 
+<body>
+<div class="card">
+  <h2>Software & Server Setup</h2>
+
+  <!-- SOFTWARE -->
+  <select id="vendor">
+    <option value="">-- Select software --</option>
+    <option value="E-Soft">E-Soft</option>
+    <option value="BTMS">BTMS</option>
+    <option value="Pastel">Pastel</option>
+  </select>
+
+  <!-- USERS -->
+  <input type="number" id="users" placeholder="Number of Users" />
+
+  <button id="submitBtn">Submit</button>
+</div>
+
+<script>
+document.getElementById("submitBtn").onclick = async () => {
+  const vendor = document.getElementById("vendor").value;
+  const users = document.getElementById("users").value;
+  const email = localStorage.getItem("leadEmail");
+
+  if(!vendor) return alert("Select software");
+  if(!users) return alert("Enter number of users");
+  if(!email) return alert("Signup first");
+
+  const res = await fetch("/api/save-specs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email,
+      vendor,
+      number_of_users: users
+    })
+  });
+
+  if(res.ok){
+    alert("Saved successfully 🎉");
+    localStorage.removeItem("leadEmail");
+    location.href="/thankyou.html";
+  } else {
+    alert("Something went wrong");
+  }
+};
+</script>
+</body>
+</html>
