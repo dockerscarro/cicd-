@@ -3,13 +3,13 @@ name: CI/CD Pipeline (QA - Full Stack + HubSpot ETL)
 on:
   push:
     branches:
-      - xyz
+      - qa
 
 jobs:
 
-  # =====================================================
-  # 1️⃣ CI - NODE APP
-  # =====================================================
+  #########################################################
+  # 1️⃣ NODE CI
+  #########################################################
   node-ci:
     runs-on: ubuntu-latest
     steps:
@@ -28,9 +28,9 @@ jobs:
         run: npx tsc --noEmit
 
 
-  # =====================================================
-  # 2️⃣ DOCKER TEST - NODE APP
-  # =====================================================
+  #########################################################
+  # 2️⃣ NODE DOCKER TEST (FIXED TARGET)
+  #########################################################
   node-docker-test:
     needs: node-ci
     runs-on: ubuntu-latest
@@ -41,7 +41,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image (Node)
-        run: docker build -t dgm-remapp:test .
+        run: docker build --target node-runtime -t dgm-remapp:test .
 
       - name: Run container for smoke test
         run: |
@@ -64,13 +64,13 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-          docker stop dgm-remapp-test
-          docker rm dgm-remapp-test
+          docker stop dgm-remapp-test || true
+          docker rm dgm-remapp-test || true
 
 
-  # =====================================================
-  # 3️⃣ CI - PYTHON HUBSPOT ETL
-  # =====================================================
+  #########################################################
+  # 3️⃣ PYTHON CI (ETL)
+  #########################################################
   python-ci:
     runs-on: ubuntu-latest
     steps:
@@ -90,9 +90,9 @@ jobs:
           flake8 .
 
 
-  # =====================================================
-  # 4️⃣ DOCKER BUILD - HUBSPOT ETL
-  # =====================================================
+  #########################################################
+  # 4️⃣ PYTHON DOCKER BUILD (FIXED TARGET)
+  #########################################################
   python-docker-build:
     needs: python-ci
     runs-on: ubuntu-latest
@@ -103,12 +103,12 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build ETL Docker image
-        run: docker build -t hubspot-sync:test .
+        run: docker build --target hubspot-etl -t hubspot-sync:test .
 
 
-  # =====================================================
-  # 5️⃣ DEPLOY BOTH TO SERVER
-  # =====================================================
+  #########################################################
+  # 5️⃣ DEPLOY TO SERVER
+  #########################################################
   deploy-to-server:
     needs:
       - node-docker-test
@@ -138,7 +138,6 @@ jobs:
           ##################################################
           NODE_DIR=~/dgm-remapp
           NODE_CONTAINER=dgm-remapp
-          NODE_REPO=https://github.com/dockerscarro/cicd-.git
           BRANCH=qa
           PAT_TOKEN=${{ secrets.PAT_TOKEN }}
 
@@ -151,7 +150,7 @@ jobs:
           fi
 
           cd \$NODE_DIR
-          docker build -t \$NODE_CONTAINER:qa .
+          docker build --target node-runtime -t \$NODE_CONTAINER:qa .
 
           if [ "\$(docker ps -aq -f name=\$NODE_CONTAINER)" ]; then
               docker stop \$NODE_CONTAINER || true
@@ -173,7 +172,6 @@ jobs:
           # HUBSPOT ETL DEPLOY
           ##################################################
           ETL_DIR=~/hubspot-sync
-          ETL_REPO=https://github.com/dockerscarro/postgres.git
 
           if [ ! -d "\$ETL_DIR" ]; then
               git clone -b \$BRANCH https://\$PAT_TOKEN@github.com/dockerscarro/postgres.git \$ETL_DIR
@@ -184,7 +182,7 @@ jobs:
           fi
 
           cd \$ETL_DIR
-          docker build -t hubspot-sync:latest .
+          docker build --target hubspot-etl -t hubspot-sync:latest .
 
           docker network create hubspot-net || true
           docker network connect hubspot-net postgres-hubspot || true
