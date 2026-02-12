@@ -6,9 +6,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
-COPY tsconfig.json ./
-COPY src ./src
-COPY public ./public
+COPY . .
 
 RUN npm run build
 
@@ -19,13 +17,12 @@ FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY package*.json ./
-RUN npm ci --omit=dev
+# Install static file server
+RUN npm install -g serve
 
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/node_modules ./node_modules
+# Copy built files
+COPY --from=builder /app/dist ./dist
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+CMD ["serve", "-s", "dist", "-l", "3000"]
