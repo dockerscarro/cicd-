@@ -22,6 +22,8 @@ services:
       - hubspot-net
     env_file:
       - .env
+    environment:
+      NODE_ENV: production
 
 
   # ===========================================
@@ -33,13 +35,13 @@ services:
       context: ./etl
       dockerfile: Dockerfile
     image: hubspot-sync:abc
+    env_file:
+      - .env
     environment:
-      HUBSPOT_API_KEY: ${HUBSPOT_API_KEY}
       POSTGRES_HOST: postgres-hubspot
       POSTGRES_PORT: 5432
       POSTGRES_DB: hubspot_db
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     networks:
       - hubspot-net
     restart: "no"
