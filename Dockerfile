@@ -1,9 +1,7 @@
-############################################################
-# 1️⃣ NODE BUILD STAGE
-############################################################
-FROM node:20-alpine AS node-build
+# ---------- Stage 1: Build Node App ----------
+FROM node:20-alpine AS node-builder
 
-WORKDIR /node-app
+WORKDIR /app
 
 COPY package*.json ./
 RUN npm ci
@@ -15,26 +13,8 @@ COPY public ./public
 RUN npm run build
 
 
-############################################################
-# 2️⃣ NODE PRODUCTION IMAGE
-############################################################
-FROM node:20-alpine AS node-runtime
-
-WORKDIR /app
-
-COPY --from=node-build /node-app ./
-
-ENV NODE_ENV=production
-
-EXPOSE 3000
-
-CMD ["npm", "start"]
-
-
-############################################################
-# 3️⃣ PYTHON ETL IMAGE
-############################################################
-FROM python:3.11-slim AS hubspot-etl
+# ---------- Stage 2: Python ETL Runtime ----------
+FROM python:3.11-slim
 
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1
@@ -51,4 +31,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy ETL code
 COPY . .
 
+# Copy built Node app from previous stage
+COPY --from=node-builder /app/build ./frontend-build
+
+# Expose Node port if needed
+EXPOSE 3000
+
+# Default command
 CMD ["python", "app.py"]
