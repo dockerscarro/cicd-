@@ -3,7 +3,7 @@ name: CI/CD Pipeline (QA)
 on:
   push:
     branches:
-      - abc
+      - qa
 
 jobs:
 
@@ -60,7 +60,7 @@ jobs:
 
 
   # ==========================================
-  # 3️⃣ Deploy Using Docker Compose
+  # 3️⃣ Deploy (Always Replace Container)
   # ==========================================
   deploy:
     needs: [ci-node, ci-python]
@@ -82,7 +82,7 @@ jobs:
           BRANCH=qa
           REPO=https://${{ secrets.PAT_TOKEN }}@github.com/dockerscarro/YOUR_REPO.git
 
-          # Clone or update repository
+          # Clone or update repo
           if [ ! -d "\$APP_DIR" ]; then
               git clone -b \$BRANCH \$REPO \$APP_DIR
           else
@@ -93,7 +93,7 @@ jobs:
 
           cd \$APP_DIR
 
-          # Create environment file dynamically
+          # Create .env dynamically
           cat <<EOT > .env
           HUBSPOT_API_KEY=${{ secrets.HUBSPOT_API_KEY }}
           POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
@@ -102,12 +102,18 @@ jobs:
           # Ensure external network exists
           docker network create hubspot-net || true
 
-          # Rebuild image and recreate container using SAME name
-          docker compose up -d --build --force-recreate app
+          # ALWAYS remove existing container (if any)
+          docker rm -f dgm-remapp 2>/dev/null || true
 
-          echo "✅ Frontend updated successfully"
+          # Build new image
+          docker compose build app
 
-          # Run ETL job
+          # Start fresh container
+          docker compose up -d app
+
+          echo "✅ Frontend replaced successfully"
+
+          # Run ETL once
           docker compose run --rm hubspot_sync
 
           echo "✅ ETL executed successfully"
