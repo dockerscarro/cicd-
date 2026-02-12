@@ -7,7 +7,7 @@ networks:
 services:
 
   # ==========================================
-  # Frontend Application (Long Running)
+  # Frontend Application
   # ==========================================
   app:
     container_name: dgm-remapp
@@ -17,15 +17,13 @@ services:
     image: dgm-remapp:qa
     ports:
       - "3002:3000"
-    env_file:
-      - .env
     restart: unless-stopped
     networks:
       - hubspot-net
 
 
   # ==========================================
-  # HubSpot ETL (Run On-Demand)
+  # HubSpot ETL (Run On Demand)
   # ==========================================
   hubspot_sync:
     container_name: hubspot-sync
