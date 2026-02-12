@@ -8,29 +8,31 @@ services:
 
   # ===========================================
   # Frontend Application
-  # ==========================================
+  # ===========================================
   app:
     container_name: dgm-remapp
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    image: dgm-remapp:qa
+    image: dgm-remapp:abc
     ports:
       - "3005:3000"
     restart: unless-stopped
     networks:
       - hubspot-net
+    env_file:
+      - .env
 
 
-  # ==========================================
+  # ===========================================
   # HubSpot ETL (Run On Demand)
-  # ==========================================
+  # ===========================================
   hubspot_sync:
     container_name: hubspot-sync
     build:
       context: ./etl
       dockerfile: Dockerfile
-    image: hubspot-sync:qa
+    image: hubspot-sync:abc
     environment:
       HUBSPOT_API_KEY: ${HUBSPOT_API_KEY}
       POSTGRES_HOST: postgres-hubspot
