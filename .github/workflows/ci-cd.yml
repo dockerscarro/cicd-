@@ -3,7 +3,7 @@ name: CI/CD Pipeline (QA - Full Stack + HubSpot ETL)
 on:
   push:
     branches:
-      - qa
+      - xyz
 
 jobs:
 
