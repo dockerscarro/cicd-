@@ -1,4 +1,4 @@
-name: CI/CD Pipeline (QA)
+name: CI/CD Pipeline (ABC)
 
 on:
   push:
@@ -9,7 +9,7 @@ jobs:
 
   # ===========================================
   # 1️⃣ Node CI
-  # ==========================================
+  # ===========================================
   ci-node:
     runs-on: ubuntu-latest
     defaults:
@@ -33,9 +33,9 @@ jobs:
         run: npx tsc --noEmit
 
 
-  # ==========================================
+  # ===========================================
   # 2️⃣ Python CI
-  # ==========================================
+  # ===========================================
   ci-python:
     runs-on: ubuntu-latest
     defaults:
@@ -59,9 +59,9 @@ jobs:
           flake8 .
 
 
-  # ==========================================
-  # 3️⃣ Deploy (Always Replace Container)
-  # ==========================================
+  # ===========================================
+  # 3️⃣ Deploy to Server
+  # ===========================================
   deploy:
     needs: [ci-node, ci-python]
     runs-on: ubuntu-latest
@@ -79,43 +79,36 @@ jobs:
           set -e
 
           APP_DIR=~/project-root
-          BRANCH=qa
+          BRANCH=abc
           REPO=https://${{ secrets.PAT_TOKEN }}@github.com/dockerscarro/YOUR_REPO.git
 
-          # Clone or update repo
+          # Clone or update repository
           if [ ! -d "\$APP_DIR" ]; then
               git clone -b \$BRANCH \$REPO \$APP_DIR
           else
               cd \$APP_DIR
-              git fetch --all
+              git fetch origin
               git reset --hard origin/\$BRANCH
           fi
 
           cd \$APP_DIR
 
-          # Create .env dynamically
-          cat <<EOT > .env
-          HUBSPOT_API_KEY=${{ secrets.HUBSPOT_API_KEY }}
-          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-          EOT
+          # Create .env file
+          echo "HUBSPOT_API_KEY=${{ secrets.HUBSPOT_API_KEY }}" > .env
+          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
 
           # Ensure external network exists
           docker network create hubspot-net || true
 
-          # ALWAYS remove existing container (if any)
-          docker rm -f dgm-remapp 2>/dev/null || true
+          # Fully clean previous containers
+          docker compose down --remove-orphans
 
-          # Build new image
-          docker compose build app
-
-          # Start fresh container
-          docker compose up -d app
-
-          echo "✅ Frontend replaced successfully"
+          # Build and start fresh
+          docker compose up -d --build
 
           # Run ETL once
           docker compose run --rm hubspot_sync
 
-          echo "✅ ETL executed successfully"
+          echo "✅ Deployment completed successfully"
 
           EOF
