@@ -1,15 +1,45 @@
 version: "3.9"
 
+networks:
+  hubspot-net:
+    external: true
+
 services:
+
+  # ==========================================
+  # Frontend Application (Long Running)
+  # ==========================================
   app:
     container_name: dgm-remapp
-    build: .
-    image: dgm-remapp:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: dgm-remapp:qa
     ports:
-      - "3000:3000"
+      - "3002:3000"
     env_file:
       - .env
-    volumes:
-      - .:/app
-      - /app/node_modules
     restart: unless-stopped
+    networks:
+      - hubspot-net
+
+
+  # ==========================================
+  # HubSpot ETL (Run On-Demand)
+  # ==========================================
+  hubspot_sync:
+    container_name: hubspot-sync
+    build:
+      context: ./etl
+      dockerfile: Dockerfile
+    image: hubspot-sync:qa
+    environment:
+      HUBSPOT_API_KEY: ${HUBSPOT_API_KEY}
+      POSTGRES_HOST: postgres-hubspot
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: hubspot_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - hubspot-net
+    restart: "no"
