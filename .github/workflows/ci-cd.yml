@@ -75,36 +75,42 @@ jobs:
       - name: Deploy to Server
         run: |
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT }} \
-          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} <<EOF
+          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           set -e
 
-          APP_DIR=~/project-root
+          APP_DIR=$HOME/project-root
           BRANCH=abc
           REPO=https://${{ secrets.PAT_TOKEN }}@github.com/dockerscarro/cicd-.git
 
-          # Clone or update repository
-          if [ ! -d "\$APP_DIR" ]; then
-              git clone -b \$BRANCH \$REPO \$APP_DIR
+          # Clone or update repo
+          if [ ! -d "$APP_DIR" ]; then
+              git clone -b $BRANCH $REPO $APP_DIR
           else
-              cd \$APP_DIR
+              cd $APP_DIR
               git fetch origin
-              git reset --hard origin/\$BRANCH
+              git reset --hard origin/$BRANCH
           fi
 
-          cd \$APP_DIR
+          cd $APP_DIR
 
-          # Create .env file
-          echo "HUBSPOT_API_KEY=${{ secrets.HUBSPOT_API_KEY }}" > .env
-          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
+          # Create .env safely
+          cat > .env <<EOT
+          HUBSPOT_API_KEY=${{ secrets.HUBSPOT_API_KEY }}
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          EOT
 
           # Ensure external network exists
-          docker network create hubspot-net || true
+          docker network inspect hubspot-net >/dev/null 2>&1 || \
+          docker network create hubspot-net
 
-          # Fully clean previous containers
+          # Stop & remove old containers
           docker compose down --remove-orphans
 
-          # Build and start fresh
-          docker compose up -d --build
+          # Build fresh images
+          docker compose build --no-cache
+
+          # Start frontend
+          docker compose up -d app
 
           # Run ETL once
           docker compose run --rm hubspot_sync
