@@ -80,7 +80,7 @@ jobs:
 
           APP_DIR=~/project-root
           BRANCH=abc
-          REPO=https://${{ secrets.PAT_TOKEN }}@github.com/dockerscarro/YOUR_REPO.git
+          REPO=https://${{ secrets.PAT_TOKEN }}@github.com/dockerscarro/cicd-.git
 
           # Clone or update repository
           if [ ! -d "\$APP_DIR" ]; then
