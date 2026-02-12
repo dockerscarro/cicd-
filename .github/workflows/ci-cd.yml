@@ -7,14 +7,15 @@ on:
 
 jobs:
 
-  # =====================================================
+  # ==========================================
   # 1️⃣ Node CI
-  # =====================================================
+  # ==========================================
   ci-node:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: frontend
+
     steps:
       - uses: actions/checkout@v4
 
@@ -32,14 +33,15 @@ jobs:
         run: npx tsc --noEmit
 
 
-  # =====================================================
+  # ==========================================
   # 2️⃣ Python CI
-  # =====================================================
+  # ==========================================
   ci-python:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: etl
+
     steps:
       - uses: actions/checkout@v4
 
@@ -57,9 +59,9 @@ jobs:
           flake8 .
 
 
-  # =====================================================
-  # 3️⃣ Deploy to Server Using Docker Compose
-  # =====================================================
+  # ==========================================
+  # 3️⃣ Deploy
+  # ==========================================
   deploy:
     needs: [ci-node, ci-python]
     runs-on: ubuntu-latest
@@ -70,7 +72,7 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
 
-      - name: Deploy Application & ETL
+      - name: Deploy to Server
         run: |
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT }} \
           ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} <<EOF
@@ -78,7 +80,7 @@ jobs:
 
           APP_DIR=~/project-root
           BRANCH=qa
-          REPO=https://${{ secrets.PAT_TOKEN }}@github.com/dockerscarro/cicd-.git
+          REPO=https://${{ secrets.PAT_TOKEN }}@github.com/dockerscarro/YOUR_REPO.git
 
           if [ ! -d "\$APP_DIR" ]; then
               git clone -b \$BRANCH \$REPO \$APP_DIR
@@ -90,13 +92,22 @@ jobs:
 
           cd \$APP_DIR
 
+          # Create .env dynamically from GitHub Secrets
+          cat <<EOT > .env
+          HUBSPOT_API_KEY=${{ secrets.HUBSPOT_API_KEY }}
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          EOT
+
+          # Ensure network exists
+          docker network create hubspot-net || true
+
           # Build images
           docker compose build
 
           # Start frontend
           docker compose up -d app
 
-          echo "✅ Frontend deployed successfully"
+          echo "✅ Frontend deployed"
 
           # Run ETL once
           docker compose run --rm hubspot_sync
