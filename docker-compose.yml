@@ -4,7 +4,50 @@ networks:
   hubspot-net:
     external: true
 
+servicesversion: "3.9"
+
+networks:
+  hubspot-net:
+    external: true
+
 services:
+
+  # ==========================================
+  # Frontend Application
+  # ==========================================
+  app:
+    container_name: dgm-remapp
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: dgm-remapp:qa
+    ports:
+      - "3002:3000"
+    restart: unless-stopped
+    networks:
+      - hubspot-net
+
+
+  # ==========================================
+  # HubSpot ETL (On-Demand Job)
+  # ==========================================
+  hubspot_sync:
+    container_name: hubspot-sync
+    build:
+      context: ./etl
+      dockerfile: Dockerfile
+    image: hubspot-sync:qa
+    environment:
+      HUBSPOT_API_KEY: ${HUBSPOT_API_KEY}
+      POSTGRES_HOST: postgres-hubspot
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: hubspot_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - hubspot-net
+    restart: "no"
+
 
   # ==========================================
   # Frontend Application
