@@ -60,7 +60,7 @@ jobs:
 
 
   # ==========================================
-  # 3️⃣ Deploy
+  # 3️⃣ Deploy Using Docker Compose
   # ==========================================
   deploy:
     needs: [ci-node, ci-python]
@@ -82,6 +82,7 @@ jobs:
           BRANCH=qa
           REPO=https://${{ secrets.PAT_TOKEN }}@github.com/dockerscarro/YOUR_REPO.git
 
+          # Clone or update repository
           if [ ! -d "\$APP_DIR" ]; then
               git clone -b \$BRANCH \$REPO \$APP_DIR
           else
@@ -92,24 +93,21 @@ jobs:
 
           cd \$APP_DIR
 
-          # Create .env dynamically from GitHub Secrets
+          # Create environment file dynamically
           cat <<EOT > .env
           HUBSPOT_API_KEY=${{ secrets.HUBSPOT_API_KEY }}
           POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
           EOT
 
-          # Ensure network exists
+          # Ensure external network exists
           docker network create hubspot-net || true
 
-          # Build images
-          docker compose build
+          # Rebuild image and recreate container using SAME name
+          docker compose up -d --build --force-recreate app
 
-          # Start frontend
-          docker compose up -d app
+          echo "✅ Frontend updated successfully"
 
-          echo "✅ Frontend deployed"
-
-          # Run ETL once
+          # Run ETL job
           docker compose run --rm hubspot_sync
 
           echo "✅ ETL executed successfully"
