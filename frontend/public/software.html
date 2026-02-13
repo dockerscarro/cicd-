@@ -3,43 +3,58 @@
 <head>
 <meta charset="UTF-8">
 <title>Software & Server Setup</title>
+
 <style>
-*{box-sizing:border-box;}
-body{
-  font-family:"Segoe UI",Arial,sans-serif;
-  height:100vh;
-  margin:0;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  background:linear-gradient(135deg,#667eea,#764ba2);
+body {
+  font-family: Arial, sans-serif;
+  background: #764ba2;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.card{
-  background:#fff;
-  padding:30px;
-  width:380px;
-  border-radius:14px;
-  box-shadow:0 20px 40px rgba(0,0,0,0.2);
-  display:flex;
-  flex-direction:column;
+
+.card {
+  background: #fff;
+  padding: 25px;
+  width: 360px;
+  border-radius: 12px;
 }
-h2{text-align:center;margin-bottom:15px;}
-select,input{
-  margin:10px 0;
-  padding:12px;
-  border-radius:8px;
-  border:1px solid #ddd;
-  font-size:15px;
+
+h2 {
+  text-align: center;
+  margin-bottom: 10px;
 }
-button{
-  margin-top:18px;
-  padding:12px;
-  border:none;
-  border-radius:10px;
-  font-weight:600;
-  color:#fff;
-  cursor:pointer;
-  background:linear-gradient(135deg,#43cea2,#185a9d);
+
+label {
+  display: block;
+  margin: 8px 0;
+  cursor: pointer;
+}
+
+input[type="number"] {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+button {
+  width: 100%;
+  margin-top: 15px;
+  padding: 12px;
+  background: #43cea2;
+  border: none;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.error {
+  color: #e53935;
+  font-size: 12px;
+  margin: 4px 0 6px;
+  display: none;
 }
 </style>
 </head>
@@ -48,48 +63,109 @@ button{
 <div class="card">
   <h2>Software & Server Setup</h2>
 
-  <!-- SOFTWARE -->
-  <select id="vendor">
-    <option value="">-- Select software --</option>
-    <option value="E-Soft">E-Soft</option>
-    <option value="BTMS">BTMS</option>
-    <option value="Pastel">Pastel</option>
-  </select>
+  <strong>Software (select any)</strong>
 
-  <!-- USERS -->
-  <input type="number" id="users" placeholder="Number of Users" />
+  <label>
+    <input type="checkbox" name="vendor" value="E-Soft">
+    E-Soft
+  </label>
+
+  <label>
+    <input type="checkbox" name="vendor" value="BTMS">
+    BTMS
+  </label>
+
+  <label>
+    <input type="checkbox" name="vendor" value="Pastel">
+    Pastel
+  </label>
+
+  <small>You may select one, two, or all three</small>
+  <div class="error" id="vendorError"></div>
+
+  <input type="number" id="users" min="1" placeholder="Number of users">
+  <div class="error" id="usersError"></div>
+
+  <div class="error" id="emailError"></div>
 
   <button id="submitBtn">Submit</button>
 </div>
 
 <script>
-document.getElementById("submitBtn").onclick = async () => {
-  const vendor = document.getElementById("vendor").value;
+const submitBtn = document.getElementById("submitBtn");
+const vendorError = document.getElementById("vendorError");
+const usersError = document.getElementById("usersError");
+const emailError = document.getElementById("emailError");
+
+submitBtn.addEventListener("click", async () => {
+  // Clear previous errors
+  vendorError.style.display = "none";
+  usersError.style.display = "none";
+  emailError.style.display = "none";
+
+  const vendors = Array.from(document.querySelectorAll('input[name="vendor"]:checked'))
+                      .map(v => v.value);
   const users = document.getElementById("users").value;
   const email = localStorage.getItem("leadEmail");
 
-  if(!vendor) return alert("Select software");
-  if(!users) return alert("Enter number of users");
-  if(!email) return alert("Signup first");
+  let valid = true;
 
-  const res = await fetch("/api/save-specs", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email,
-      vendor,
-      number_of_users: users
-    })
-  });
-
-  if(res.ok){
-    alert("Saved successfully 🎉");
-    localStorage.removeItem("leadEmail");
-    location.href="/thankyou.html";
-  } else {
-    alert("Something went wrong");
+  if (vendors.length === 0) {
+    vendorError.textContent = "Select at least one software";
+    vendorError.style.display = "block";
+    valid = false;
   }
-};
+
+  if (!users || users <= 0) {
+    usersError.textContent = "Enter valid number of users";
+    usersError.style.display = "block";
+    valid = false;
+  }
+
+  if (!email) {
+    emailError.textContent = "Signup first to continue";
+    emailError.style.display = "block";
+    valid = false;
+  }
+
+  if (!valid) return;
+
+  try {
+    const res = await fetch("/api/save-specs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        vendor: vendors,
+        number_of_users: Number(users)
+      })
+    });
+    // Update HubSpot user_status to "submitted"
+    try {
+      await fetch("/api/update-user-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          user_status: "submitted"
+        })
+      });
+    } catch (err) {
+      console.error("Failed to update HubSpot user_status", err);
+    }
+
+
+    if (res.ok) {
+      location.href = "/thankyou.html";
+    } else {
+      usersError.textContent = "Something went wrong. Please try again";
+      usersError.style.display = "block";
+    }
+  } catch (err) {
+    usersError.textContent = "Network error. Please try again";
+    usersError.style.display = "block";
+  }
+});
 </script>
 </body>
 </html>
