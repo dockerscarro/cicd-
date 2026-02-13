@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Signup</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #764ba2; /* same purple */
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+form {
+  background: #ffffff;
+  padding: 25px;
+  width: 360px;
+  border-radius: 12px;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #43cea2;
+}
+
+button {
+  width: 100%;
+  margin-top: 15px;
+  padding: 12px;
+  background: #43cea2; /* same green button */
+  border: none;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 15px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+/* OTP loading spinner */
+.spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #43cea2; /* green color */
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.error {
+  color: #e53935;
+  font-size: 12px;
+  margin: 4px 0 6px;
+  display: none;
+}
+
+</style>
+
+</head>
+
+<body>
+<form id="signupForm" novalidate>
+
+  <h2>Sign Up</h2>
+
+    <input
+      name="firstName"
+      placeholder="First Name"
+      required
+      minlength="2"
+      autocomplete="given-name"
+    />
+    <div class="error"></div>
+
+    <input
+      name="lastName"
+      placeholder="Last Name"
+      required
+      minlength="1"
+      autocomplete="family-name"
+    />
+    <div class="error"></div>
+
+    <input
+      name="email"
+      type="email"
+      placeholder="Email"
+      required
+      pattern="^[a-z0-9._%+-]+@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|icloud\.com|aol\.com|protonmail\.com|zoho\.com|mail\.com|gmx\.com|yandex\.com|live\.com|msn\.com|comcast\.net|verizon\.net|att\.net|me\.com|mac\.com|fastmail\.com|hushmail\.com|tutanota\.com|rediffmail\.com|qq\.com|naver\.com|daum\.net|hanmail\.net|seznam\.cz|orange\.fr|wanadoo\.fr|laposte\.net|bluewin\.ch|telia\.com|btinternet\.com|virginmedia\.com|shaw\.ca|rogers\.com)$"
+      title="Please use a valid email from a supported provider (Gmail, Yahoo, Outlook, etc.) in lowercase only"
+      oninput="this.value = this.value.toLowerCase()"
+    />
+    <div class="error"></div>
+
+    <div style="position: relative; margin-bottom: 8px;">
+      <input
+        name="otp"
+        id="otp"
+        placeholder="Enter OTP"
+        style="width: calc(100% - 90px); display:none; padding-right: 90px;"
+      />
+      <button
+        type="button"
+        id="verifyOtpBtn"
+        style="
+          position: absolute;
+          right: 0;
+          top: 0;
+          height: 100%;
+          width: 80px;
+          border-radius: 0 6px 6px 0;
+          background: #43cea2;
+          color: white;
+          border: none;
+          cursor: pointer;
+          display: none;
+        "
+      >
+        Verify
+      </button>
+    </div>
+    <div id="otpMessage" style="font-size:12px;margin-top:4px;color:red;display:none;"></div>
+
+
+
+
+
+    <button type="button" id="sendOtpBtn" style="margin-top:4px;">
+      Send OTP
+      <span id="otpSpinner" class="spinner" style="display:none;"></span>
+    </button>
+
+
+    
+
+
+    <input
+      name="business_name"
+      placeholder="Business Name"
+      required
+      minlength="2"
+      autocomplete="organization"
+    />
+    <div class="error"></div>
+
+    <input
+      name="vat_number"
+      id="vat_number"
+      placeholder="VAT Number"
+      required
+      minlength="2"
+      pattern="[A-Z0-9]+"
+      title="VAT number can contain only uppercase letters and numbers"
+      inputmode="text"
+    />
+    <div class="error"></div>
+
+
+    <select name="country_" required>
+      <option value="">Select Country</option>
+      <option>Afghanistan</option>
+      <option>Albania</option>
+      <option>Algeria</option>
+      <option>Andorra</option>
+      <option>Angola</option>
+      <option>Antigua and Barbuda</option>
+      <option>Argentina</option>
+      <option>Armenia</option>
+      <option>Australia</option>
+      <option>Austria</option>
+      <option>Azerbaijan</option>
+      <option>Bahamas</option>
+      <option>Bahrain</option>
+      <option>Bangladesh</option>
+      <option>Barbados</option>
+      <option>Belarus</option>
+      <option>Belgium</option>
+      <option>Belize</option>
+      <option>Benin</option>
+      <option>Bhutan</option>
+      <option>Bolivia</option>
+      <option>Bosnia and Herzegovina</option>
+      <option>Botswana</option>
+      <option>Brazil</option>
+      <option>Brunei</option>
+      <option>Bulgaria</option>
+      <option>Burkina Faso</option>
+      <option>Burundi</option>
+      <option>Cambodia</option>
+      <option>Cameroon</option>
+      <option>Canada</option>
+      <option>Cape Verde</option>
+      <option>Central African Republic</option>
+      <option>Chad</option>
+      <option>Chile</option>
+      <option>China</option>
+      <option>Colombia</option>
+      <option>Comoros</option>
+      <option>Congo</option>
+      <option>Costa Rica</option>
+      <option>Croatia</option>
+      <option>Cuba</option>
+      <option>Cyprus</option>
+      <option>Czech Republic</option>
+      <option>Denmark</option>
+      <option>Djibouti</option>
+      <option>Dominica</option>
+      <option>Dominican Republic</option>
+      <option>Ecuador</option>
+      <option>Egypt</option>
+      <option>El Salvador</option>
+      <option>Equatorial Guinea</option>
+      <option>Eritrea</option>
+      <option>Estonia</option>
+      <option>Eswatini</option>
+      <option>Ethiopia</option>
+      <option>Fiji</option>
+      <option>Finland</option>
+      <option>France</option>
+      <option>Gabon</option>
+      <option>Gambia</option>
+      <option>Georgia</option>
+      <option>Germany</option>
+      <option>Ghana</option>
+      <option>Greece</option>
+      <option>Grenada</option>
+      <option>Guatemala</option>
+      <option>Guinea</option>
+      <option>Guinea-Bissau</option>
+      <option>Guyana</option>
+      <option>Haiti</option>
+      <option>Honduras</option>
+      <option>Hungary</option>
+      <option>Iceland</option>
+      <option>India</option>
+      <option>Indonesia</option>
+      <option>Iran</option>
+      <option>Iraq</option>
+      <option>Ireland</option>
+      <option>Israel</option>
+      <option>Italy</option>
+      <option>Jamaica</option>
+      <option>Japan</option>
+      <option>Jordan</option>
+      <option>Kazakhstan</option>
+      <option>Kenya</option>
+      <option>Kiribati</option>
+      <option>Kuwait</option>
+      <option>Kyrgyzstan</option>
+      <option>Laos</option>
+      <option>Latvia</option>
+      <option>Lebanon</option>
+      <option>Lesotho</option>
+      <option>Liberia</option>
+      <option>Libya</option>
+      <option>Liechtenstein</option>
+      <option>Lithuania</option>
+      <option>Luxembourg</option>
+      <option>Madagascar</option>
+      <option>Malawi</option>
+      <option>Malaysia</option>
+      <option>Maldives</option>
+      <option>Mali</option>
+      <option>Malta</option>
+      <option>Marshall Islands</option>
+      <option>Mauritania</option>
+      <option>Mauritius</option>
+      <option>Mexico</option>
+      <option>Micronesia</option>
+      <option>Moldova</option>
+      <option>Monaco</option>
+      <option>Mongolia</option>
+      <option>Montenegro</option>
+      <option>Morocco</option>
+      <option>Mozambique</option>
+      <option>Myanmar</option>
+      <option>Namibia</option>
+      <option>Nauru</option>
+      <option>Nepal</option>
+      <option>Netherlands</option>
+      <option>New Zealand</option>
+      <option>Nicaragua</option>
+      <option>Niger</option>
+      <option>Nigeria</option>
+      <option>North Korea</option>
+      <option>North Macedonia</option>
+      <option>Norway</option>
+      <option>Oman</option>
+      <option>Pakistan</option>
+      <option>Palau</option>
+      <option>Panama</option>
+      <option>Papua New Guinea</option>
+      <option>Paraguay</option>
+      <option>Peru</option>
+      <option>Philippines</option>
+      <option>Poland</option>
+      <option>Portugal</option>
+      <option>Qatar</option>
+      <option>Romania</option>
+      <option>Russia</option>
+      <option>Rwanda</option>
+      <option>Saint Kitts and Nevis</option>
+      <option>Saint Lucia</option>
+      <option>Saint Vincent and the Grenadines</option>
+      <option>Samoa</option>
+      <option>San Marino</option>
+      <option>Sao Tome and Principe</option>
+      <option>Saudi Arabia</option>
+      <option>Senegal</option>
+      <option>Serbia</option>
+      <option>Seychelles</option>
+      <option>Sierra Leone</option>
+      <option>Singapore</option>
+      <option>Slovakia</option>
+      <option>Slovenia</option>
+      <option>Solomon Islands</option>
+      <option>Somalia</option>
+      <option>South Africa</option>
+      <option>South Korea</option>
+      <option>South Sudan</option>
+      <option>Spain</option>
+      <option>Sri Lanka</option>
+      <option>Sudan</option>
+      <option>Suriname</option>
+      <option>Sweden</option>
+      <option>Switzerland</option>
+      <option>Syria</option>
+      <option>Taiwan</option>
+      <option>Tajikistan</option>
+      <option>Tanzania</option>
+      <option>Thailand</option>
+      <option>Timor-Leste</option>
+      <option>Togo</option>
+      <option>Tonga</option>
+      <option>Trinidad and Tobago</option>
+      <option>Tunisia</option>
+      <option>Turkey</option>
+      <option>Turkmenistan</option>
+      <option>Tuvalu</option>
+      <option>Uganda</option>
+      <option>Ukraine</option>
+      <option>United Arab Emirates</option>
+      <option>United Kingdom</option>
+      <option>United States</option>
+      <option>Uruguay</option>
+      <option>Uzbekistan</option>
+      <option>Vanuatu</option>
+      <option>Vatican City</option>
+      <option>Venezuela</option>
+      <option>Vietnam</option>
+      <option>Yemen</option>
+      <option>Zambia</option>
+      <option>Zimbabwe</option>
+    </select>
+    <div class="error"></div>
+
+    <button type="submit">Next</button>
+  </form>
+
+  <script>
+    const form = document.getElementById("signupForm");
+    const fields = {
+      firstName: form.querySelector('input[name="firstName"]'),
+      lastName: form.querySelector('input[name="lastName"]'),
+      email: form.querySelector('input[name="email"]'),
+      otp: form.querySelector('input[name="otp"]'),
+      business_name: form.querySelector('input[name="business_name"]'),
+      vat_number: form.querySelector('input[name="vat_number"]'),
+      country_: form.querySelector('select[name="country_"]'),
+    };
+    const errors = form.querySelectorAll(".error");
+    const sendOtpBtn = document.getElementById("sendOtpBtn");
+    const verifyOtpBtn = document.getElementById("verifyOtpBtn");
+    const otpMessage = document.getElementById("otpMessage");
+    const otpSpinner = document.getElementById("otpSpinner");
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    // ===== OTP Verified State (persistent until next page) =====
+    let otpVerified = sessionStorage.getItem("otpVerified") === "true";
+    const verifiedEmail = sessionStorage.getItem("verifiedEmail") || "";
+
+    // Show message if OTP already verified
+    if (otpVerified && verifiedEmail === fields.email.value.trim()) {
+      otpMessage.style.color = "green";
+      otpMessage.textContent = "OTP already verified ✅ You can proceed.";
+      otpMessage.style.display = "block";
+      fields.otp.style.display = "block";
+      fields.otp.disabled = true;
+      sendOtpBtn.style.display = "none";
+      verifyOtpBtn.style.display = "none";
+      fields.email.readOnly = true;
+      submitBtn.disabled = false;
+    } else {
+      submitBtn.disabled = true; // disable submit until OTP verified
+    }
+
+    // ===== VAT input auto-uppercase =====
+    fields.vat_number.addEventListener('input', () => {
+      fields.vat_number.value = fields.vat_number.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    });
+
+    // ===== SEND OTP =====
+    sendOtpBtn.addEventListener("click", async () => {
+      const email = fields.email.value.trim();
+      otpMessage.style.display = "none";
+
+      if (!email) {
+        otpMessage.style.color = "red";
+        otpMessage.textContent = "Please enter your email first";
+        otpMessage.style.display = "block";
+        return;
+      }
+
+      sendOtpBtn.disabled = true;
+      otpSpinner.style.display = "inline-block";
+
+      try {
+        const res = await fetch("/api/send-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+
+        const result = await res.json();
+
+        if (res.ok && result.success) {
+          otpMessage.style.color = "green";
+          otpMessage.textContent = "OTP sent! Please check your email.";
+          fields.otp.style.display = "inline-block";
+          verifyOtpBtn.style.display = "inline-block";
+          fields.otp.disabled = false;
+          submitBtn.disabled = true;
+        } else {
+          otpMessage.style.color = "red";
+          otpMessage.textContent = result.message || "Failed to send OTP";
+        }
+        otpMessage.style.display = "block";
+
+      } catch (err) {
+        otpMessage.style.color = "red";
+        otpMessage.textContent = "Error sending OTP";
+        otpMessage.style.display = "block";
+      } finally {
+        sendOtpBtn.disabled = false;
+        otpSpinner.style.display = "none";
+      }
+    });
+
+    // ===== VERIFY OTP =====
+    verifyOtpBtn.addEventListener("click", async () => {
+      const email = fields.email.value.trim();
+      const otp = fields.otp.value.trim();
+
+      if (!otp) {
+        otpMessage.style.color = "red";
+        otpMessage.textContent = "Please enter OTP first";
+        otpMessage.style.display = "block";
+        return;
+      }
+
+      verifyOtpBtn.disabled = true;
+
+      try {
+        const res = await fetch("/api/verify-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, otp }),
+        });
+
+        const result = await res.json();
+
+        if (res.ok && result.success) {
+          otpMessage.style.color = "green";
+          otpMessage.textContent = "OTP verified ✅ You can proceed.";
+          otpVerified = true;
+          sessionStorage.setItem("otpVerified", "true");
+          sessionStorage.setItem("verifiedEmail", email);
+
+          // ✅ Make email readonly instead of disabled
+          fields.email.readOnly = true;
+          fields.otp.disabled = true;
+
+          // ✅ Hide buttons
+          verifyOtpBtn.style.display = "none";
+          sendOtpBtn.style.display = "none";
+
+          // ✅ Enable submit
+          submitBtn.disabled = false;
+
+        } else {
+          otpMessage.style.color = "red";
+          otpMessage.textContent = result.message || "OTP incorrect";
+          otpVerified = false;
+          sessionStorage.setItem("otpVerified", "false");
+
+          fields.otp.disabled = false;
+          verifyOtpBtn.disabled = false;
+          submitBtn.disabled = true;
+        }
+        otpMessage.style.display = "block";
+
+      } catch (err) {
+        otpMessage.style.color = "red";
+        otpMessage.textContent = "Error verifying OTP";
+        otpVerified = false;
+        sessionStorage.setItem("otpVerified", "false");
+
+        fields.otp.disabled = false;
+        verifyOtpBtn.disabled = false;
+        submitBtn.disabled = true;
+        otpMessage.style.display = "block";
+      }
+    });
+
+    // ===== FORM SUBMIT =====
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      // Require OTP verification
+      const currentEmail = fields.email.value.trim();
+      if (sessionStorage.getItem("otpVerified") !== "true" || sessionStorage.getItem("verifiedEmail") !== currentEmail) {
+        otpMessage.style.color = "red";
+        otpMessage.textContent = "Please verify your email first!";
+        otpMessage.style.display = "block";
+        return;
+      }
+
+      let valid = true;
+
+      // Clear all errors
+      errors.forEach(err => {
+        err.textContent = "";
+        err.style.display = "none";
+      });
+
+      // Validate each field
+      Object.keys(fields).forEach((key, index) => {
+        const value = fields[key].value.trim();
+        if (!value) {
+          errors[index].textContent = "This field is required";
+          errors[index].style.display = "block";
+          valid = false;
+        }
+      });
+
+      if (!valid) return;
+
+      const formData = Object.fromEntries(new FormData(form));
+
+      try {
+        const res = await fetch("/api/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+
+        const result = await res.json();
+
+        if (!res.ok) {
+          errors[errors.length - 1].textContent = result.message || "Signup failed";
+          errors[errors.length - 1].style.display = "block";
+          return;
+        }
+
+        localStorage.setItem("leadEmail", formData.email);
+
+        // Clear OTP session storage after successful signup
+        sessionStorage.removeItem("otpVerified");
+        sessionStorage.removeItem("verifiedEmail");
+        // Update HubSpot user_status to "signup page"
+        try {
+          await fetch("/api/update-user-status", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: formData.email,
+              user_status: "signup page"
+            })
+          });
+        } catch (err) {
+          console.error("Failed to update HubSpot user_status", err);
+        }
+
+
+        location.href = "/software.html";
+
+      } catch (err) {
+        errors[errors.length - 1].textContent = "Signup failed";
+        errors[errors.length - 1].style.display = "block";
+      }
+    });
+    </script>
+
+
+  </body>
+  </html>

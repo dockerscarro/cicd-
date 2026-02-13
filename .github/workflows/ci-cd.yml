@@ -1,128 +1,129 @@
-name: CI/CD Pipeline (QA)
+name: CI/CD Pipeline (ABC)
 
 on:
   push:
     branches:
-      - qa
+      - abc
 
 jobs:
-  ci:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
-      - name: Setup Node.js
+  # ============================================
+  # 1️⃣ Node CI
+  # ===========================================
+  ci-node:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
-      - name: TypeScript type check
+      - name: TypeScript check
         run: npx tsc --noEmit
 
-  docker-test:
-    needs: ci
+
+  # ===========================================
+  # 2️⃣ Python CI
+  # ===========================================
+  ci-python:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: etl
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
 
-      - name: Build Docker image
-        run: docker build -t dgm-remapp:test .
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-      - name: Run container for smoke test
+      - name: Lint
         run: |
-          docker run -d --name dgm-remapp-test -p 3002:3000 dgm-remapp:test
-          sleep 10
-          if [ "$(docker inspect -f '{{.State.Running}}' dgm-remapp-test)" != "true" ]; then
-            echo "❌ Container crashed or exited"
-            docker logs dgm-remapp-test
-            exit 1
-          fi
-          echo "✅ Container is running"
+          pip install flake8
+          flake8 .
 
-      - name: HTTP smoke test
-        run: curl -f http://localhost:3002
 
-      - name: Print container logs (debug)
-        if: always()
-        run: docker logs dgm-remapp-test
-
-      - name: Cleanup
-        if: always()
-        run: |
-          docker stop dgm-remapp-test
-          docker rm dgm-remapp-test
-
-  deploy-to-server:
-    needs: docker-test
+  # ===========================================
+  # 3️⃣ Deploy to Server
+  # ===========================================
+  deploy:
+    needs: [ci-node, ci-python]
     runs-on: ubuntu-latest
+
     steps:
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
 
-      - name: Test SSH connection
+      - name: Deploy to Server
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo '✅ Connected to server successfully!'"
-
-      - name: Build and run Docker container on server
-        run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} <<'EOF'
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT }} \
+          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           set -e
-      
-          APP_DIR=~/dgm-remapp
-          CONTAINER_NAME=dgm-remapp
-          REPO_URL=https://github.com/dockerscarro/cicd-.git
-          BRANCH=qa
-          PAT_TOKEN=${{ secrets.PAT_TOKEN }}
-      
-          # Install Docker if missing
-          if ! command -v docker &> /dev/null; then
-              sudo apt update
-              sudo apt install -y docker.io git
-              sudo systemctl enable --now docker
-              sudo usermod -aG docker $USER
-          fi
-      
-          # Clone repo first time, otherwise update
+
+          APP_DIR=$HOME/project-root
+          BRANCH=abc
+          REPO=https://${{ secrets.PAT_TOKEN }}@github.com/dockerscarro/cicd-.git
+
+          # Clone or update repo
           if [ ! -d "$APP_DIR" ]; then
-              git clone -b $BRANCH https://$PAT_TOKEN@github.com/dockerscarro/cicd-.git $APP_DIR
+              git clone -b $BRANCH $REPO $APP_DIR
           else
               cd $APP_DIR
-              git fetch --all
+              git fetch origin
               git reset --hard origin/$BRANCH
           fi
-      
-          cd $APP_DIR
-      
-          # Build Docker image
-          docker build -t $CONTAINER_NAME:qa .
-      
-          # Stop and remove existing container if exists
-          if [ "$(docker ps -aq -f name=$CONTAINER_NAME)" ]; then
-              docker stop $CONTAINER_NAME
-              docker rm $CONTAINER_NAME
-          fi
-      
-          # Run container
-          docker run -d -p 3002:3000 --name $CONTAINER_NAME $CONTAINER_NAME:qa
-      
-          # Verify container is running
-          sleep 5
-          if [ "$(docker inspect -f '{{.State.Running}}' $CONTAINER_NAME)" != "true" ]; then
-              docker logs $CONTAINER_NAME
-              exit 1
-          fi
-      
-          echo "✅ Container is running successfully on the server!"
-          EOF
 
+          cd $APP_DIR
+
+          # Create .env safely
+          cat > .env <<EOT
+          HUBSPOT_API_KEY=${{ secrets.HUBSPOT_API_KEY }}
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          
+          SMTP_HOST=smtp.gmail.com
+          SMTP_PORT=587
+          SMTP_USER=${{ secrets.SMTP_USER }}
+          SMTP_PASS=${{ secrets.SMTP_PASS }}
+          
+          FROM_EMAIL=${{ secrets.FROM_EMAIL }}
+          FRONTEND_URL=http://localhost:3005
+
+          EOT
+
+          # Ensure external network exists
+          docker network inspect hubspot-net >/dev/null 2>&1 || \
+          docker network create hubspot-net
+
+          # Stop & remove old containers
+          docker compose down --remove-orphans
+
+          # Build fresh images
+          docker compose build --no-cache
+
+          # Start frontend
+          docker compose up -d app
+
+          # Run ETL once
+          docker compose run --rm hubspot_sync
+
+          echo "✅ Deployment completed successfully"
+
+          EOF

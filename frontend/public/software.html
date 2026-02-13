@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Software & Server Setup</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #764ba2;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  background: #fff;
+  padding: 25px;
+  width: 360px;
+  border-radius: 12px;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+label {
+  display: block;
+  margin: 8px 0;
+  cursor: pointer;
+}
+
+input[type="number"] {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+button {
+  width: 100%;
+  margin-top: 15px;
+  padding: 12px;
+  background: #43cea2;
+  border: none;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.error {
+  color: #e53935;
+  font-size: 12px;
+  margin: 4px 0 6px;
+  display: none;
+}
+</style>
+</head>
+
+<body>
+<div class="card">
+  <h2>Software & Server Setup</h2>
+
+  <strong>Software (select any)</strong>
+
+  <label>
+    <input type="checkbox" name="vendor" value="E-Soft">
+    E-Soft
+  </label>
+
+  <label>
+    <input type="checkbox" name="vendor" value="BTMS">
+    BTMS
+  </label>
+
+  <label>
+    <input type="checkbox" name="vendor" value="Pastel">
+    Pastel
+  </label>
+
+  <small>You may select one, two, or all three</small>
+  <div class="error" id="vendorError"></div>
+
+  <input type="number" id="users" min="1" placeholder="Number of users">
+  <div class="error" id="usersError"></div>
+
+  <div class="error" id="emailError"></div>
+
+  <button id="submitBtn">Submit</button>
+</div>
+
+<script>
+const submitBtn = document.getElementById("submitBtn");
+const vendorError = document.getElementById("vendorError");
+const usersError = document.getElementById("usersError");
+const emailError = document.getElementById("emailError");
+
+submitBtn.addEventListener("click", async () => {
+  // Clear previous errors
+  vendorError.style.display = "none";
+  usersError.style.display = "none";
+  emailError.style.display = "none";
+
+  const vendors = Array.from(document.querySelectorAll('input[name="vendor"]:checked'))
+                      .map(v => v.value);
+  const users = document.getElementById("users").value;
+  const email = localStorage.getItem("leadEmail");
+
+  let valid = true;
+
+  if (vendors.length === 0) {
+    vendorError.textContent = "Select at least one software";
+    vendorError.style.display = "block";
+    valid = false;
+  }
+
+  if (!users || users <= 0) {
+    usersError.textContent = "Enter valid number of users";
+    usersError.style.display = "block";
+    valid = false;
+  }
+
+  if (!email) {
+    emailError.textContent = "Signup first to continue";
+    emailError.style.display = "block";
+    valid = false;
+  }
+
+  if (!valid) return;
+
+  try {
+    const res = await fetch("/api/save-specs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        vendor: vendors,
+        number_of_users: Number(users)
+      })
+    });
+    // Update HubSpot user_status to "submitted"
+    try {
+      await fetch("/api/update-user-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          user_status: "submitted"
+        })
+      });
+    } catch (err) {
+      console.error("Failed to update HubSpot user_status", err);
+    }
+
+
+    if (res.ok) {
+      location.href = "/thankyou.html";
+    } else {
+      usersError.textContent = "Something went wrong. Please try again";
+      usersError.style.display = "block";
+    }
+  } catch (err) {
+    usersError.textContent = "Network error. Please try again";
+    usersError.style.display = "block";
+  }
+});
+</script>
+</body>
+</html>
