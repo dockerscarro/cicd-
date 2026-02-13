@@ -5,7 +5,6 @@ import routes from "./routes";
 
 dotenv.config();
 
-
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(process.cwd(), "public"))); // for HTML pages
